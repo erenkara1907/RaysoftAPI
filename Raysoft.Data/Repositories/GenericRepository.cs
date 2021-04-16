@@ -4,7 +4,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+
 using Microsoft.EntityFrameworkCore;
+
 using Raysoft.Core.Repositories;
 
 namespace Raysoft.Data.Repositories
@@ -24,10 +26,12 @@ namespace Raysoft.Data.Repositories
         {
             var entity = await _dbSet.FindAsync(id);
 
-            if (entity!=null)
+            if (entity != null)
             {
                 _context.Entry(entity).State = EntityState.Detached;
             }
+
+            return entity;
         }
 
         public async Task<IEnumerable<TEntity>> GetAllAsync()
@@ -37,7 +41,7 @@ namespace Raysoft.Data.Repositories
 
         public IQueryable<TEntity> Where(Expression<Func<TEntity, bool>> predicate)
         {
-            throw new NotImplementedException();
+            return _dbSet.Where(predicate);
         }
 
         public async Task AddAsync(TEntity entity)
@@ -47,12 +51,13 @@ namespace Raysoft.Data.Repositories
 
         public void Remove(TEntity entity)
         {
-            throw new NotImplementedException();
+            _dbSet.Remove(entity);
         }
 
         public TEntity Update(TEntity entity)
         {
-            throw new NotImplementedException();
+            _context.Entry(entity).State = EntityState.Modified;
+            return entity;
         }
     }
 }
