@@ -1,12 +1,27 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+
+using Raysoft.Core.Configuration;
+using Raysoft.Core.Models;
+using Raysoft.Core.Repositories;
+using Raysoft.Core.Services;
+using Raysoft.Core.UnitOfWork;
+using Raysoft.Data;
+using Raysoft.Data.Repositories;
+using Raysoft.Service.Services;
+
+using SharedLibrary.Configuration;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,9 +38,56 @@ namespace Raysoft.API
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // DI Register
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            services.AddScoped(typeof(IGenericService<,>), typeof(GenericService<,>));
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+            services.AddDbContext<AppDbContext>(options =>
+            {
+                options.UseSqlServer(Configuration.GetConnectionString("SqlServer"), sqlOpitons =>
+                 {
+                     sqlOpitons.MigrationsAssembly("Raysoft.Data");
+                 });
+            });
+
+            services.AddIdentity<UserApp, IdentityRole>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+                options.Password.RequireNonAlphanumeric = false;
+            })
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddDefaultTokenProviders();
+
+            services.Configure<CustomTokenOptions>(Configuration.GetSection("TokenOptions"));
+            services.Configure<List<Client>>(Configuration.GetSection("Clients"));
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+            {
+                var tokenOptions = Configuration.GetSection("TokenOptions").Get<CustomTokenOptions>();
+                options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters()
+                {
+                    ValidIssuer = tokenOptions.Issuer,
+                    ValidAudience = tokenOptions.Audience[0],
+                    IssuerSigningKey = SignService.GetSymmetricSecurityKey(tokenOptions.SecurityKey),
+
+                    ValidateIssuerSigningKey = true,
+                    ValidateAudience = true,
+                    ValidateIssuer = true,
+                    ValidateLifetime = true,
+
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
@@ -47,6 +109,8 @@ namespace Raysoft.API
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 

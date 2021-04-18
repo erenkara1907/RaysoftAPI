@@ -16,6 +16,6 @@ namespace Raysoft.Core.Services
 
         Task<Response<NoDataDto>> RevokeRefreshToken(string refreshtoken);
 
-        Task<Response<ClientTokenDto>> CreateTokenByClient(ClientLoginDto clientLoginDto);
+        Response<ClientTokenDto> CreateTokenByClient(ClientLoginDto clientLoginDto);
     }
 }
