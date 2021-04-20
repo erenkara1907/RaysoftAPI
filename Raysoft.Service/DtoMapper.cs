@@ -16,6 +16,8 @@ namespace Raysoft.Service
         public DtoMapper()
         {
             CreateMap<ProductDto, Product>().ReverseMap();
+            CreateMap<CryptoNewDto, CryptoNew>().ReverseMap();
+            CreateMap<EconomistDto, Economist>().ReverseMap();
             CreateMap<UserAppDto, UserApp>().ReverseMap();
         }
     }

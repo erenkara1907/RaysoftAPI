@@ -18,6 +18,8 @@ namespace Raysoft.Data
         }
 
         public DbSet<Product> Products { get; set; }
+        public DbSet<CryptoNew> CryptoNews { get; set; }
+        public DbSet<Economist> Economists { get; set; }
         public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)

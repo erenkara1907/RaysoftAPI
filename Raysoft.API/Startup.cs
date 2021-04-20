@@ -26,6 +26,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentValidation.AspNetCore;
+using SharedLibrary.Extensions;
+using SharedLibrary.Services;
 
 namespace Raysoft.API
 {
@@ -89,7 +92,15 @@ namespace Raysoft.API
                 };
             });
 
-            services.AddControllers();
+            
+
+            services.AddControllers().AddFluentValidation(options =>
+            {
+                options.RegisterValidatorsFromAssemblyContaining<Startup>();
+            });
+
+            services.UseCustomValidationResponse();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Raysoft.API", Version = "v1" });
@@ -105,6 +116,8 @@ namespace Raysoft.API
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Raysoft.API v1"));
             }
+
+            app.UseCustomException();
 
             app.UseHttpsRedirection();
 

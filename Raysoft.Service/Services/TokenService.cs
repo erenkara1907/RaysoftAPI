@@ -17,6 +17,7 @@ using Raysoft.Core.Models;
 using Raysoft.Core.Services;
 
 using SharedLibrary.Configuration;
+using SharedLibrary.Services;
 
 namespace Raysoft.Service.Services
 {
